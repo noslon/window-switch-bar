@@ -30,6 +30,14 @@ export function activate(context: vscode.ExtensionContext) {
       ? vscode.StatusBarAlignment.Right
       : vscode.StatusBarAlignment.Left;
 
+  // Shows or hides the Explorer section, based on winhopper.sidebar.
+  const applySidebar = () =>
+    vscode.commands.executeCommand(
+      'setContext',
+      'winhopper.showSidebar',
+      vscode.workspace.getConfiguration('winhopper').get('sidebar', true),
+    );
+
   const currentTarget = (): string | undefined =>
     vscode.workspace.workspaceFile?.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
@@ -160,7 +168,44 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
 
+  // First-run questions. Also available as "WinHopper: Setup". Esc skips a question.
+  const setup = async () => {
+    const config = vscode.workspace.getConfiguration('winhopper');
+
+    const display = await vscode.window.showQuickPick(
+      [
+        { label: 'Dropdown', description: 'One status bar item that opens a list (default)', value: 'dropdown' },
+        { label: 'Buttons', description: 'One status bar button per window', value: 'buttons' },
+      ],
+      { title: 'WinHopper setup (1 of 3): How should the status bar show windows?', ignoreFocusOut: true },
+    );
+    const position = await vscode.window.showQuickPick(
+      [
+        { label: 'Left', description: 'Bottom left (default)', value: 'left' },
+        { label: 'Right', description: 'Bottom right', value: 'right' },
+      ],
+      { title: 'WinHopper setup (2 of 3): Which side of the status bar?', ignoreFocusOut: true },
+    );
+    const sidebar = await vscode.window.showQuickPick(
+      [
+        { label: 'Yes', description: 'Show the window list in the Explorer (default)', value: true },
+        { label: 'No', description: 'Use the status bar only', value: false },
+      ],
+      { title: 'WinHopper setup (3 of 3): Show a window list in the Explorer sidebar?', ignoreFocusOut: true },
+    );
+
+    if (display) await config.update('display', display.value, vscode.ConfigurationTarget.Global);
+    if (position) await config.update('position', position.value, vscode.ConfigurationTarget.Global);
+    if (sidebar) await config.update('sidebar', sidebar.value, vscode.ConfigurationTarget.Global);
+    await context.globalState.update('setupDone', true);
+  };
+
+  const setupCommand = vscode.commands.registerCommand('winhopper.setup', setup);
+
   const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration('winhopper.sidebar')) {
+      void applySidebar();
+    }
     if (e.affectsConfiguration('winhopper.display') || e.affectsConfiguration('winhopper.position')) {
       // Alignment can't change on an existing item, so recreate them all.
       pruneButtons(new Set());
@@ -191,8 +236,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   void fs.mkdir(registryDir, { recursive: true }).then(refresh);
   const timer = setInterval(refresh, HEARTBEAT_MS);
+  void applySidebar();
+  if (!context.globalState.get('setupDone')) {
+    void setup();
+  }
 
-  context.subscriptions.push(jump, pick, configWatcher, windowsView, treeChanged, {
+  context.subscriptions.push(jump, pick, setupCommand, configWatcher, windowsView, treeChanged, {
     dispose: () => {
       clearInterval(timer);
       items.forEach((item) => item.dispose());

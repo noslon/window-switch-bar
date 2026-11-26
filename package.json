@@ -42,13 +42,18 @@
       {
         "command": "winhopper.pick",
         "title": "Switch Window"
+      },
+      {
+        "command": "winhopper.setup",
+        "title": "Setup"
       }
     ],
     "views": {
       "explorer": [
         {
           "id": "winhopper.windows",
-          "name": "Open Windows"
+          "name": "Open Windows",
+          "when": "winhopper.showSidebar"
         }
       ]
     },
@@ -80,6 +85,11 @@
             "Show WinHopper on the right side of the status bar."
           ],
           "description": "Which side of the status bar WinHopper uses."
+        },
+        "winhopper.sidebar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the window list in the Explorer sidebar."
         }
       }
     }
