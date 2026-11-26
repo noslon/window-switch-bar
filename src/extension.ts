@@ -68,6 +68,17 @@ export function activate(context: vscode.ExtensionContext) {
     return windows.sort((a, b) => a.label.localeCompare(b.label));
   };
 
+  // Windows with the same name show up once. The first one in name order is used.
+  const uniqueByName = (windows: WindowInfo[]): WindowInfo[] => {
+    const byName = new Map<string, WindowInfo>();
+    for (const w of windows) {
+      if (!byName.has(w.label)) {
+        byName.set(w.label, w);
+      }
+    }
+    return [...byName.values()];
+  };
+
   // Opens VS Code's own URL, e.g. vscode://file/Users/me/project. The OS hands it to the
   // running VS Code, which focuses the window if that folder or workspace is already open.
   // Works the same on macOS, Windows and Linux, and for VS Code Insiders or forks.
@@ -99,7 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   const refresh = async () => {
     await publish();
-    const windows = await readWindows();
+    const windows = uniqueByName(await readWindows());
     treeChanged.fire(undefined);
 
     if (dropdownMode()) {
@@ -116,13 +127,13 @@ export function activate(context: vscode.ExtensionContext) {
     // One item per other window, so a single click jumps to it.
     dropdown?.dispose();
     dropdown = undefined;
-    pruneButtons(new Set(windows.map((w) => w.id)));
+    pruneButtons(new Set(windows.map((w) => w.label)));
 
     windows.forEach((w, i) => {
-      let item = items.get(w.id);
+      let item = items.get(w.label);
       if (!item) {
         item = vscode.window.createStatusBarItem(alignment(), 100 - i);
-        items.set(w.id, item);
+        items.set(w.label, item);
       }
       item.text = `$(window) ${w.label}`;
       item.tooltip = `Switch to ${w.label}`;
@@ -134,7 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
   const jump = vscode.commands.registerCommand('winhopper.jump', jumpTo);
 
   const pick = vscode.commands.registerCommand('winhopper.pick', async () => {
-    const windows = await readWindows();
+    const windows = uniqueByName(await readWindows());
     if (windows.length === 0) {
       void vscode.window.showInformationMessage('No other VS Code windows with a folder are open.');
       return;
