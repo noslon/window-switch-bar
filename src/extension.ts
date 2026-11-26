@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
   const items = new Map<string, vscode.StatusBarItem>();
 
   const alignment = (): vscode.StatusBarAlignment =>
-    vscode.workspace.getConfiguration('winhopper').get('position') === 'right'
+    vscode.workspace.getConfiguration('windowswitchbar').get('position') === 'right'
       ? vscode.StatusBarAlignment.Right
       : vscode.StatusBarAlignment.Left;
 
@@ -90,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
       () => false,
     );
     if (!opened) {
-      void vscode.window.showErrorMessage(`WinHopper could not switch to ${target}.`);
+      void vscode.window.showErrorMessage(`Window Switch Bar could not switch to ${target}.`);
     }
   };
 
@@ -120,21 +120,21 @@ export function activate(context: vscode.ExtensionContext) {
       const current = w.id === myId;
       item.text = current ? `$(check) ${w.label}` : `$(window) ${w.label}`;
       item.tooltip = current ? 'Current window' : `Switch to ${w.label}`;
-      item.command = current ? undefined : { command: 'winhopper.jump', title: 'Switch Window', arguments: [w.target] };
+      item.command = current ? undefined : { command: 'windowswitchbar.jump', title: 'Switch Window', arguments: [w.target] };
       item.show();
     });
   };
 
-  const jump = vscode.commands.registerCommand('winhopper.jump', jumpTo);
+  const jump = vscode.commands.registerCommand('windowswitchbar.jump', jumpTo);
 
   // Command Palette shortcuts for the side of the status bar.
   const setPosition = (value: string) =>
-    vscode.workspace.getConfiguration('winhopper').update('position', value, vscode.ConfigurationTarget.Global);
-  const positionLeft = vscode.commands.registerCommand('winhopper.positionLeft', () => setPosition('left'));
-  const positionRight = vscode.commands.registerCommand('winhopper.positionRight', () => setPosition('right'));
+    vscode.workspace.getConfiguration('windowswitchbar').update('position', value, vscode.ConfigurationTarget.Global);
+  const positionLeft = vscode.commands.registerCommand('windowswitchbar.positionLeft', () => setPosition('left'));
+  const positionRight = vscode.commands.registerCommand('windowswitchbar.positionRight', () => setPosition('right'));
 
   const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration('winhopper.position')) {
+    if (e.affectsConfiguration('windowswitchbar.position')) {
       // Alignment can't change on an existing item, so recreate them all.
       items.forEach((item) => item.dispose());
       items.clear();

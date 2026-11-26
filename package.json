@@ -1,18 +1,18 @@
 {
-  "name": "winhopper",
-  "displayName": "WinHopper",
+  "name": "window-switch-bar",
+  "displayName": "Window Switch Bar",
   "description": "Jump between open VS Code windows in one click from the status bar.",
   "version": "1.0.0",
   "publisher": "jhuber",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/noslon/winhopper.git"
+    "url": "https://github.com/noslon/window-switch-bar.git"
   },
   "bugs": {
-    "url": "https://github.com/noslon/winhopper/issues"
+    "url": "https://github.com/noslon/window-switch-bar/issues"
   },
-  "homepage": "https://github.com/noslon/winhopper#readme",
+  "homepage": "https://github.com/noslon/window-switch-bar#readme",
   "icon": "images/icon.png",
   "galleryBanner": {
     "color": "#0078D4",
@@ -37,7 +37,7 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": true,
-      "description": "WinHopper only reads window names and folder paths. It never runs or reads workspace code."
+      "description": "Window Switch Bar only reads window names and folder paths. It never runs or reads workspace code."
     }
   },
   "activationEvents": [
@@ -46,20 +46,20 @@
   "contributes": {
     "commands": [
       {
-        "command": "winhopper.positionLeft",
+        "command": "windowswitchbar.positionLeft",
         "title": "Show on Left",
-        "category": "WinHopper"
+        "category": "Window Switch Bar"
       },
       {
-        "command": "winhopper.positionRight",
+        "command": "windowswitchbar.positionRight",
         "title": "Show on Right",
-        "category": "WinHopper"
+        "category": "Window Switch Bar"
       }
     ],
     "configuration": {
-      "title": "WinHopper",
+      "title": "Window Switch Bar",
       "properties": {
-        "winhopper.position": {
+        "windowswitchbar.position": {
           "type": "string",
           "default": "left",
           "enum": [
@@ -67,10 +67,10 @@
             "right"
           ],
           "enumDescriptions": [
-            "Show WinHopper on the left side of the status bar.",
-            "Show WinHopper on the right side of the status bar."
+            "Show Window Switch Bar on the left side of the status bar.",
+            "Show Window Switch Bar on the right side of the status bar."
           ],
-          "description": "Which side of the status bar WinHopper uses."
+          "description": "Which side of the status bar Window Switch Bar uses."
         }
       }
     }
@@ -80,7 +80,7 @@
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "package": "vsce package",
-    "install-extension": "npm run package && code --install-extension winhopper-$npm_package_version.vsix --force"
+    "install-extension": "npm run package && code --install-extension window-switch-bar-$npm_package_version.vsix --force"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

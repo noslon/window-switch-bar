@@ -1,4 +1,4 @@
-# Contributing to WinHopper
+# Contributing to Window Switch Bar
 
 ## Set up
 
@@ -7,12 +7,12 @@ npm install
 npm run compile      # TypeScript -> out/
 ```
 
-Press `F5` in VS Code (**Run Extension** configuration) to start an Extension Development Host with WinHopper loaded. `npm run watch` recompiles on every change.
+Press `F5` in VS Code (**Run Extension** configuration) to start an Extension Development Host with Window Switch Bar loaded. `npm run watch` recompiles on every change.
 
 ## Package and install
 
 ```sh
-npm run package              # creates winhopper-<version>.vsix
+npm run package              # creates window-switch-bar-<version>.vsix
 npm run install-extension    # packages and installs over the existing version
 ```
 
