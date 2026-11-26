@@ -53,14 +53,14 @@ Changes apply right away in every open window. No restart needed.
 ## Quick start
 
 1. Open two or more VS Code windows, each with a folder or `.code-workspace` file open.
-2. Click **Windows (n)** in the status bar and pick a window. Or click a window in the **Open Windows** section.
+2. Click the window name in the status bar to open the list, then pick a window. Or click a window in the **Open Windows** section.
 
 You can also run **WinHopper: Switch Window** from the Command Palette.
 
 ## Notes
 
 - Windows with the same name are shown once.
-- Only windows with WinHopper running are listed.
+- Only windows with WinHopper running are listed. This includes windows in untrusted folders (Restricted Mode).
 - Empty windows (no folder open) are not listed, because there is nothing to jump back to.
 - To move the **Open Windows** section, drag its header to where you want it.
 

@@ -125,7 +125,7 @@ export function activate(context: vscode.ExtensionContext) {
       // One item that opens a list of windows.
       pruneButtons(new Set());
       dropdown ??= vscode.window.createStatusBarItem(alignment(), 100);
-      dropdown.text = `$(window) Windows (${windows.length})`;
+      dropdown.text = `$(window) ${currentLabel()}`;
       dropdown.tooltip = 'Switch to another VS Code window';
       dropdown.command = 'winhopper.pick';
       dropdown.show();

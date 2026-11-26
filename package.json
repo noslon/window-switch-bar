@@ -34,6 +34,12 @@
     "Other"
   ],
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "WinHopper only reads window names and folder paths. It never runs or reads workspace code."
+    }
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
