@@ -1,0 +1,100 @@
+{
+  "name": "winhopper",
+  "displayName": "WinHopper",
+  "description": "Jump between open VS Code windows in one click: status bar buttons or a dropdown, plus an Explorer section.",
+  "version": "1.0.0",
+  "publisher": "jhuber",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noslon/winhopper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/noslon/winhopper/issues"
+  },
+  "homepage": "https://github.com/noslon/winhopper#readme",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#0078D4",
+    "theme": "dark"
+  },
+  "keywords": [
+    "window",
+    "windows",
+    "switch",
+    "switcher",
+    "jump",
+    "multi-window",
+    "workspace"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "winhopper.pick",
+        "title": "Switch Window"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "winhopper.windows",
+          "name": "Open Windows"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "WinHopper",
+      "properties": {
+        "winhopper.display": {
+          "type": "string",
+          "default": "dropdown",
+          "enum": [
+            "buttons",
+            "dropdown"
+          ],
+          "enumDescriptions": [
+            "One status bar button per other window. One click jumps to that window.",
+            "One status bar item. Click it, then pick a window from the list."
+          ],
+          "description": "How other VS Code windows are shown in the status bar."
+        },
+        "winhopper.position": {
+          "type": "string",
+          "default": "left",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "enumDescriptions": [
+            "Show WinHopper on the left side of the status bar.",
+            "Show WinHopper on the right side of the status bar."
+          ],
+          "description": "Which side of the status bar WinHopper uses."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package",
+    "install-extension": "npm run package && code --install-extension winhopper-$npm_package_version.vsix --force"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.1.1",
+    "typescript": "^5.4.5"
+  }
+}

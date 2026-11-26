@@ -1,0 +1,194 @@
+import * as vscode from 'vscode';
+import { randomUUID } from 'crypto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+// Every window writes a small JSON file into the shared global storage folder.
+// Files that stop being refreshed are treated as closed windows.
+const HEARTBEAT_MS = 5000;
+const STALE_MS = 20000;
+
+interface WindowInfo {
+  id: string;
+  label: string;
+  target: string;
+  seen: number;
+}
+
+export function activate(context: vscode.ExtensionContext) {
+  const registryDir = context.globalStorageUri.fsPath;
+  const myId = randomUUID();
+  const myFile = path.join(registryDir, `${myId}.json`);
+  const items = new Map<string, vscode.StatusBarItem>();
+  let dropdown: vscode.StatusBarItem | undefined;
+
+  const dropdownMode = (): boolean =>
+    vscode.workspace.getConfiguration('winhopper').get('display') === 'dropdown';
+
+  const alignment = (): vscode.StatusBarAlignment =>
+    vscode.workspace.getConfiguration('winhopper').get('position') === 'right'
+      ? vscode.StatusBarAlignment.Right
+      : vscode.StatusBarAlignment.Left;
+
+  const currentTarget = (): string | undefined =>
+    vscode.workspace.workspaceFile?.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  const currentLabel = (): string => vscode.workspace.name ?? 'Empty Window';
+
+  const ownInfo = (): WindowInfo => ({
+    id: myId,
+    label: currentLabel(),
+    target: currentTarget() ?? '',
+    seen: Date.now(),
+  });
+
+  const publish = async () => {
+    await fs.writeFile(myFile, JSON.stringify(ownInfo())).catch(() => undefined);
+  };
+
+  const readWindows = async (): Promise<WindowInfo[]> => {
+    const files = await fs.readdir(registryDir).catch(() => [] as string[]);
+    const now = Date.now();
+    const windows: WindowInfo[] = [];
+
+    for (const file of files.filter((f) => f.endsWith('.json'))) {
+      const filePath = path.join(registryDir, file);
+      try {
+        const info: WindowInfo = JSON.parse(await fs.readFile(filePath, 'utf8'));
+        if (now - info.seen > STALE_MS) {
+          await fs.rm(filePath, { force: true });
+        } else if (info.id !== myId && info.target) {
+          windows.push(info);
+        }
+      } catch {
+        // File was removed or is half-written by another window; skip it.
+      }
+    }
+
+    return windows.sort((a, b) => a.label.localeCompare(b.label));
+  };
+
+  // Opens VS Code's own URL, e.g. vscode://file/Users/me/project. The OS hands it to the
+  // running VS Code, which focuses the window if that folder or workspace is already open.
+  // Works the same on macOS, Windows and Linux, and for VS Code Insiders or forks.
+  const jumpTo = async (target: string) => {
+    const slashed = target.replace(/\\/g, '/');
+    const uri = vscode.Uri.from({
+      scheme: vscode.env.uriScheme,
+      authority: 'file',
+      path: slashed.startsWith('/') ? slashed : `/${slashed}`,
+    });
+    const opened = await vscode.env.openExternal(uri).then(
+      (ok) => ok,
+      () => false,
+    );
+    if (!opened) {
+      void vscode.window.showErrorMessage(`WinHopper could not switch to ${target}.`);
+    }
+  };
+
+  // Dispose the button items for windows that are not in `keep`.
+  const pruneButtons = (keep: Set<string>) => {
+    for (const [id, item] of items) {
+      if (!keep.has(id)) {
+        item.dispose();
+        items.delete(id);
+      }
+    }
+  };
+
+  const refresh = async () => {
+    await publish();
+    const windows = await readWindows();
+    treeChanged.fire(undefined);
+
+    if (dropdownMode()) {
+      // One item that opens a list of windows.
+      pruneButtons(new Set());
+      dropdown ??= vscode.window.createStatusBarItem(alignment(), 100);
+      dropdown.text = `$(window) Windows (${windows.length})`;
+      dropdown.tooltip = 'Switch to another VS Code window';
+      dropdown.command = 'winhopper.pick';
+      dropdown.show();
+      return;
+    }
+
+    // One item per other window, so a single click jumps to it.
+    dropdown?.dispose();
+    dropdown = undefined;
+    pruneButtons(new Set(windows.map((w) => w.id)));
+
+    windows.forEach((w, i) => {
+      let item = items.get(w.id);
+      if (!item) {
+        item = vscode.window.createStatusBarItem(alignment(), 100 - i);
+        items.set(w.id, item);
+      }
+      item.text = `$(window) ${w.label}`;
+      item.tooltip = `Switch to ${w.label}`;
+      item.command = { command: 'winhopper.jump', title: 'Switch Window', arguments: [w.target] };
+      item.show();
+    });
+  };
+
+  const jump = vscode.commands.registerCommand('winhopper.jump', jumpTo);
+
+  const pick = vscode.commands.registerCommand('winhopper.pick', async () => {
+    const windows = await readWindows();
+    if (windows.length === 0) {
+      void vscode.window.showInformationMessage('No other VS Code windows with a folder are open.');
+      return;
+    }
+
+    const picked = await vscode.window.showQuickPick(
+      windows.map((w) => ({ label: `$(window) ${w.label}`, description: w.target, target: w.target })),
+      { placeHolder: 'Jump to window' },
+    );
+    if (picked) {
+      await jumpTo(picked.target);
+    }
+  });
+
+  const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration('winhopper.display') || e.affectsConfiguration('winhopper.position')) {
+      // Alignment can't change on an existing item, so recreate them all.
+      pruneButtons(new Set());
+      dropdown?.dispose();
+      dropdown = undefined;
+      void refresh();
+    }
+  });
+
+  // Explorer section listing every window, including this one.
+  const treeChanged = new vscode.EventEmitter<WindowInfo | undefined>();
+  const windowsView = vscode.window.registerTreeDataProvider<WindowInfo>('winhopper.windows', {
+    onDidChangeTreeData: treeChanged.event,
+    getChildren: async () =>
+      [ownInfo(), ...(await readWindows())].sort((a, b) => a.label.localeCompare(b.label)),
+    getTreeItem: (w) => {
+      const isMe = w.id === myId;
+      const item = new vscode.TreeItem(w.label);
+      item.description = isMe ? 'this window' : w.target;
+      item.tooltip = w.target || w.label;
+      item.iconPath = new vscode.ThemeIcon('window');
+      if (!isMe && w.target) {
+        item.command = { command: 'winhopper.jump', title: 'Switch Window', arguments: [w.target] };
+      }
+      return item;
+    },
+  });
+
+  void fs.mkdir(registryDir, { recursive: true }).then(refresh);
+  const timer = setInterval(refresh, HEARTBEAT_MS);
+
+  context.subscriptions.push(jump, pick, configWatcher, windowsView, treeChanged, {
+    dispose: () => {
+      clearInterval(timer);
+      items.forEach((item) => item.dispose());
+      dropdown?.dispose();
+      void fs.rm(myFile, { force: true });
+    },
+  });
+}
+
+export function deactivate() {}
