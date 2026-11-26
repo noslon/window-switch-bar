@@ -16,8 +16,8 @@ Choose which side of the status bar WinHopper uses:
 
 Change it in any of these ways:
 
-- **Settings:** press `Cmd+,` (Windows/Linux: `Ctrl+,`), search for `winhopper`, and pick a value.
-- **Command Palette:** press `Cmd+Shift+P` (Windows/Linux: `Ctrl+Shift+P`), type **WinHopper**, and run **Show on Left** or **Show on Right**.
+- **Settings:** open Settings, search for `winhopper`, and pick a value.
+- **Command Palette:** open the Command Palette, type **WinHopper**, and run **Show on Left** or **Show on Right**.
 
 ```json
 "winhopper.position": "right"
@@ -32,14 +32,11 @@ Changes apply right away. No restart needed.
 
 ## Notes
 
+- The current window is marked with a check mark (✓). Clicking it does nothing.
 - Windows with the same name are shown once.
 - Only windows with WinHopper running are listed. This includes windows in untrusted folders (Restricted Mode).
-- Empty windows (no folder open) are not listed, because there is nothing to jump back to.
+- Other empty windows (no folder open) are not listed, because there is nothing to jump back to.
 - Nothing leaves your machine. WinHopper makes no network requests.
-
-## Platform support
-
-WinHopper is tested on macOS. It uses the same code on Windows and Linux, but those platforms are not tested yet.
 
 ## Feedback
 

@@ -13,10 +13,10 @@ Press `F5` in VS Code (**Run Extension** configuration) to start an Extension De
 
 ```sh
 npm run package              # creates winhopper-<version>.vsix
-npm run install-extension    # packages and installs over the existing version (macOS/Linux)
+npm run install-extension    # packages and installs over the existing version
 ```
 
-After installing, restart VS Code with `Cmd+Q` and reopen it. Windows that were already open keep running the old code until they restart.
+After installing, fully quit VS Code and reopen it. Open windows keep running the old code until they restart.
 
 ## Release
 

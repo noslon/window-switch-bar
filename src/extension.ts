@@ -94,10 +94,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
   };
 
-  // One status bar entry per other window, so a single click jumps to it.
+  // One status bar entry per window, so a single click jumps to the others.
+  // The current window is marked with a check mark and does nothing when clicked.
   const refresh = async () => {
     await publish();
-    const windows = uniqueByName(await readWindows());
+    // This window goes first, so it wins over another window with the same name.
+    const windows = uniqueByName([ownInfo(), ...(await readWindows())]).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
     const names = new Set(windows.map((w) => w.label));
 
     for (const [label, item] of items) {
@@ -113,9 +117,10 @@ export function activate(context: vscode.ExtensionContext) {
         item = vscode.window.createStatusBarItem(alignment(), 100 - i);
         items.set(w.label, item);
       }
-      item.text = `$(window) ${w.label}`;
-      item.tooltip = `Switch to ${w.label}`;
-      item.command = { command: 'winhopper.jump', title: 'Switch Window', arguments: [w.target] };
+      const current = w.id === myId;
+      item.text = current ? `$(check) ${w.label}` : `$(window) ${w.label}`;
+      item.tooltip = current ? 'Current window' : `Switch to ${w.label}`;
+      item.command = current ? undefined : { command: 'winhopper.jump', title: 'Switch Window', arguments: [w.target] };
       item.show();
     });
   };
