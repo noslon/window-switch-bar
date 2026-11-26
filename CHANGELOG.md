@@ -4,8 +4,7 @@
 
 First public release.
 
-- Status bar switcher on the bottom left of every window.
-- `winhopper.display` setting: `buttons` (one button per window) or `dropdown` (one item with a list).
-- **Open Windows** section in the Explorer that lists all windows and jumps on click. Can be hidden with `winhopper.sidebar`.
-- First-start setup (also available as **WinHopper: Setup**) for the status bar style, side, and Explorer section.
+- Status bar entry for each other open VS Code window. Click one to switch to it.
+- `winhopper.position` setting and Command Palette commands to show the status bar entries on the left or right.
+- Windows with the same name are shown once.
 - Windows are discovered through a small per-window registry in the extension's global storage. No network access.

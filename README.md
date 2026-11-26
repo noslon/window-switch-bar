@@ -6,75 +6,36 @@
 
 **Jump between open VS Code windows in one click.**
 
-If you work on several projects at once, WinHopper lists your other VS Code windows so you can switch to any of them with a single click.
+WinHopper adds your open VS Code windows to the status bar. Click a window to switch to it.
 
-## Features
+## Settings
 
-- **Status bar switcher** on the left or right side of the window, as a dropdown or as one button per window.
-- **Open Windows** section in the Explorer that lists every window. Click one to jump to it. You can turn this off.
-- **Private by design.** Nothing leaves your machine. Window names and folder paths are only shared between VS Code windows on your computer.
+Choose which side of the status bar WinHopper uses:
 
-## First start: setup
+- `winhopper.position`: `left` (default) or `right`
 
-The first time WinHopper starts, it asks three questions:
+Change it in any of these ways:
 
-1. **Status bar style:** dropdown (default) or buttons.
-2. **Side:** left (default) or right.
-3. **Explorer section:** show it (default) or not.
-
-Run **WinHopper: Setup** from the Command Palette at any time to answer them again. Press `Esc` to skip a question and keep the current value.
-
-## Change settings
-
-Your choices are saved as settings. Change them in any of these ways:
-
-- **Settings screen:** press `Cmd+,` (Windows/Linux: `Ctrl+,`), search for `winhopper`, and pick a value.
-- **settings.json:** press `Cmd+Shift+P`, run **Preferences: Open User Settings (JSON)**, and add the lines you want.
-- **Setup again:** press `Cmd+Shift+P` and run **WinHopper: Setup**.
-
-| Setting | Default | Values | What it does |
-| --- | --- | --- | --- |
-| `winhopper.display` | `dropdown` | `dropdown`, `buttons` | `dropdown` shows one status bar item with a list. `buttons` shows one button per window. |
-| `winhopper.position` | `left` | `left`, `right` | Which side of the status bar WinHopper uses. |
-| `winhopper.sidebar` | `true` | `true`, `false` | Shows or hides the **Open Windows** section in the Explorer. |
-
-For example, to get buttons on the right side and no Explorer section:
+- **Settings:** press `Cmd+,` (Windows/Linux: `Ctrl+,`), search for `winhopper`, and pick a value.
+- **Command Palette:** press `Cmd+Shift+P` (Windows/Linux: `Ctrl+Shift+P`), type **WinHopper**, and run **Show on Left** or **Show on Right**.
 
 ```json
-{
-  "winhopper.display": "buttons",
-  "winhopper.position": "right",
-  "winhopper.sidebar": false
-}
+"winhopper.position": "right"
 ```
 
-Changes apply right away in every open window. No restart needed.
+Changes apply right away. No restart needed.
 
 ## Quick start
 
 1. Open two or more VS Code windows, each with a folder or `.code-workspace` file open.
-2. Click the window name in the status bar to open the list, then pick a window. Or click a window in the **Open Windows** section.
-
-## Command Palette
-
-Press `Cmd+Shift+P` (Windows/Linux: `Ctrl+Shift+P`) and type **WinHopper** to see every option:
-
-| Command | What it does |
-| --- | --- |
-| WinHopper: Switch Window | Pick a window from the list |
-| WinHopper: Show as Dropdown | One status bar item with a list |
-| WinHopper: Show as Buttons | One status bar button per window |
-| WinHopper: Show on Left | Status bar on the left side |
-| WinHopper: Show on Right | Status bar on the right side |
-| WinHopper: Toggle Explorer Section | Show or hide the Open Windows section |
-| WinHopper: Setup | Answer the setup questions again |
+2. Click the window you want in the status bar.
 
 ## Notes
 
 - Windows with the same name are shown once.
 - Only windows with WinHopper running are listed. This includes windows in untrusted folders (Restricted Mode).
 - Empty windows (no folder open) are not listed, because there is nothing to jump back to.
-- To move the **Open Windows** section, drag its header to where you want it.
+- Nothing leaves your machine. WinHopper makes no network requests.
 
 ## Platform support
 

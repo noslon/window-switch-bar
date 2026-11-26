@@ -20,23 +20,11 @@ export function activate(context: vscode.ExtensionContext) {
   const myId = randomUUID();
   const myFile = path.join(registryDir, `${myId}.json`);
   const items = new Map<string, vscode.StatusBarItem>();
-  let dropdown: vscode.StatusBarItem | undefined;
-
-  const dropdownMode = (): boolean =>
-    vscode.workspace.getConfiguration('winhopper').get('display') === 'dropdown';
 
   const alignment = (): vscode.StatusBarAlignment =>
     vscode.workspace.getConfiguration('winhopper').get('position') === 'right'
       ? vscode.StatusBarAlignment.Right
       : vscode.StatusBarAlignment.Left;
-
-  // Shows or hides the Explorer section, based on winhopper.sidebar.
-  const applySidebar = () =>
-    vscode.commands.executeCommand(
-      'setContext',
-      'winhopper.showSidebar',
-      vscode.workspace.getConfiguration('winhopper').get('sidebar', true),
-    );
 
   const currentTarget = (): string | undefined =>
     vscode.workspace.workspaceFile?.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -106,36 +94,18 @@ export function activate(context: vscode.ExtensionContext) {
     }
   };
 
-  // Dispose the button items for windows that are not in `keep`.
-  const pruneButtons = (keep: Set<string>) => {
-    for (const [id, item] of items) {
-      if (!keep.has(id)) {
-        item.dispose();
-        items.delete(id);
-      }
-    }
-  };
-
+  // One status bar entry per other window, so a single click jumps to it.
   const refresh = async () => {
     await publish();
     const windows = uniqueByName(await readWindows());
-    treeChanged.fire(undefined);
+    const names = new Set(windows.map((w) => w.label));
 
-    if (dropdownMode()) {
-      // One item that opens a list of windows.
-      pruneButtons(new Set());
-      dropdown ??= vscode.window.createStatusBarItem(alignment(), 100);
-      dropdown.text = `$(window) ${currentLabel()}`;
-      dropdown.tooltip = 'Switch to another VS Code window';
-      dropdown.command = 'winhopper.pick';
-      dropdown.show();
-      return;
+    for (const [label, item] of items) {
+      if (!names.has(label)) {
+        item.dispose();
+        items.delete(label);
+      }
     }
-
-    // One item per other window, so a single click jumps to it.
-    dropdown?.dispose();
-    dropdown = undefined;
-    pruneButtons(new Set(windows.map((w) => w.label)));
 
     windows.forEach((w, i) => {
       let item = items.get(w.label);
@@ -152,114 +122,28 @@ export function activate(context: vscode.ExtensionContext) {
 
   const jump = vscode.commands.registerCommand('winhopper.jump', jumpTo);
 
-  const pick = vscode.commands.registerCommand('winhopper.pick', async () => {
-    const windows = uniqueByName(await readWindows());
-    if (windows.length === 0) {
-      void vscode.window.showInformationMessage('No other VS Code windows with a folder are open.');
-      return;
-    }
-
-    const picked = await vscode.window.showQuickPick(
-      windows.map((w) => ({ label: `$(window) ${w.label}`, description: w.target, target: w.target })),
-      { placeHolder: 'Jump to window' },
-    );
-    if (picked) {
-      await jumpTo(picked.target);
-    }
-  });
-
-  // First-run questions. Also available as "WinHopper: Setup". Esc skips a question.
-  const setup = async () => {
-    const config = vscode.workspace.getConfiguration('winhopper');
-
-    const display = await vscode.window.showQuickPick(
-      [
-        { label: 'Dropdown', description: 'One status bar item that opens a list (default)', value: 'dropdown' },
-        { label: 'Buttons', description: 'One status bar button per window', value: 'buttons' },
-      ],
-      { title: 'WinHopper setup (1 of 3): How should the status bar show windows?', ignoreFocusOut: true },
-    );
-    const position = await vscode.window.showQuickPick(
-      [
-        { label: 'Left', description: 'Bottom left (default)', value: 'left' },
-        { label: 'Right', description: 'Bottom right', value: 'right' },
-      ],
-      { title: 'WinHopper setup (2 of 3): Which side of the status bar?', ignoreFocusOut: true },
-    );
-    const sidebar = await vscode.window.showQuickPick(
-      [
-        { label: 'Yes', description: 'Show the window list in the Explorer (default)', value: true },
-        { label: 'No', description: 'Use the status bar only', value: false },
-      ],
-      { title: 'WinHopper setup (3 of 3): Show a window list in the Explorer sidebar?', ignoreFocusOut: true },
-    );
-
-    if (display) await config.update('display', display.value, vscode.ConfigurationTarget.Global);
-    if (position) await config.update('position', position.value, vscode.ConfigurationTarget.Global);
-    if (sidebar) await config.update('sidebar', sidebar.value, vscode.ConfigurationTarget.Global);
-    await context.globalState.update('setupDone', true);
-  };
-
-  const setupCommand = vscode.commands.registerCommand('winhopper.setup', setup);
-
-  // Command Palette shortcuts for the display settings.
-  const setSetting = (key: string, value: unknown) =>
-    vscode.workspace.getConfiguration('winhopper').update(key, value, vscode.ConfigurationTarget.Global);
-
-  const shortcuts = [
-    vscode.commands.registerCommand('winhopper.displayDropdown', () => setSetting('display', 'dropdown')),
-    vscode.commands.registerCommand('winhopper.displayButtons', () => setSetting('display', 'buttons')),
-    vscode.commands.registerCommand('winhopper.positionLeft', () => setSetting('position', 'left')),
-    vscode.commands.registerCommand('winhopper.positionRight', () => setSetting('position', 'right')),
-    vscode.commands.registerCommand('winhopper.toggleSidebar', () =>
-      setSetting('sidebar', !vscode.workspace.getConfiguration('winhopper').get('sidebar', true)),
-    ),
-  ];
+  // Command Palette shortcuts for the side of the status bar.
+  const setPosition = (value: string) =>
+    vscode.workspace.getConfiguration('winhopper').update('position', value, vscode.ConfigurationTarget.Global);
+  const positionLeft = vscode.commands.registerCommand('winhopper.positionLeft', () => setPosition('left'));
+  const positionRight = vscode.commands.registerCommand('winhopper.positionRight', () => setPosition('right'));
 
   const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration('winhopper.sidebar')) {
-      void applySidebar();
-    }
-    if (e.affectsConfiguration('winhopper.display') || e.affectsConfiguration('winhopper.position')) {
+    if (e.affectsConfiguration('winhopper.position')) {
       // Alignment can't change on an existing item, so recreate them all.
-      pruneButtons(new Set());
-      dropdown?.dispose();
-      dropdown = undefined;
+      items.forEach((item) => item.dispose());
+      items.clear();
       void refresh();
     }
   });
 
-  // Explorer section listing every window, including this one.
-  const treeChanged = new vscode.EventEmitter<WindowInfo | undefined>();
-  const windowsView = vscode.window.registerTreeDataProvider<WindowInfo>('winhopper.windows', {
-    onDidChangeTreeData: treeChanged.event,
-    getChildren: async () =>
-      [ownInfo(), ...(await readWindows())].sort((a, b) => a.label.localeCompare(b.label)),
-    getTreeItem: (w) => {
-      const isMe = w.id === myId;
-      const item = new vscode.TreeItem(w.label);
-      item.description = isMe ? 'this window' : w.target;
-      item.tooltip = w.target || w.label;
-      item.iconPath = new vscode.ThemeIcon('window');
-      if (!isMe && w.target) {
-        item.command = { command: 'winhopper.jump', title: 'Switch Window', arguments: [w.target] };
-      }
-      return item;
-    },
-  });
-
   void fs.mkdir(registryDir, { recursive: true }).then(refresh);
   const timer = setInterval(refresh, HEARTBEAT_MS);
-  void applySidebar();
-  if (!context.globalState.get('setupDone')) {
-    void setup();
-  }
 
-  context.subscriptions.push(jump, pick, setupCommand, ...shortcuts, configWatcher, windowsView, treeChanged, {
+  context.subscriptions.push(jump, positionLeft, positionRight, configWatcher, {
     dispose: () => {
       clearInterval(timer);
       items.forEach((item) => item.dispose());
-      dropdown?.dispose();
       void fs.rm(myFile, { force: true });
     },
   });

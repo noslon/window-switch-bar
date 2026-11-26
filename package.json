@@ -1,7 +1,7 @@
 {
   "name": "winhopper",
   "displayName": "WinHopper",
-  "description": "Jump between open VS Code windows in one click: status bar buttons or a dropdown, plus an Explorer section.",
+  "description": "Jump between open VS Code windows in one click from the status bar.",
   "version": "1.0.0",
   "publisher": "jhuber",
   "license": "MIT",
@@ -46,26 +46,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "winhopper.pick",
-        "title": "Switch Window",
-        "category": "WinHopper"
-      },
-      {
-        "command": "winhopper.setup",
-        "title": "Setup",
-        "category": "WinHopper"
-      },
-      {
-        "command": "winhopper.displayDropdown",
-        "title": "Show as Dropdown",
-        "category": "WinHopper"
-      },
-      {
-        "command": "winhopper.displayButtons",
-        "title": "Show as Buttons",
-        "category": "WinHopper"
-      },
-      {
         "command": "winhopper.positionLeft",
         "title": "Show on Left",
         "category": "WinHopper"
@@ -74,38 +54,11 @@
         "command": "winhopper.positionRight",
         "title": "Show on Right",
         "category": "WinHopper"
-      },
-      {
-        "command": "winhopper.toggleSidebar",
-        "title": "Toggle Explorer Section",
-        "category": "WinHopper"
       }
     ],
-    "views": {
-      "explorer": [
-        {
-          "id": "winhopper.windows",
-          "name": "Open Windows",
-          "when": "winhopper.showSidebar"
-        }
-      ]
-    },
     "configuration": {
       "title": "WinHopper",
       "properties": {
-        "winhopper.display": {
-          "type": "string",
-          "default": "dropdown",
-          "enum": [
-            "buttons",
-            "dropdown"
-          ],
-          "enumDescriptions": [
-            "One status bar button per other window. One click jumps to that window.",
-            "One status bar item. Click it, then pick a window from the list."
-          ],
-          "description": "How other VS Code windows are shown in the status bar."
-        },
         "winhopper.position": {
           "type": "string",
           "default": "left",
@@ -118,11 +71,6 @@
             "Show WinHopper on the right side of the status bar."
           ],
           "description": "Which side of the status bar WinHopper uses."
-        },
-        "winhopper.sidebar": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the window list in the Explorer sidebar."
         }
       }
     }
