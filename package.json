@@ -47,11 +47,38 @@
     "commands": [
       {
         "command": "winhopper.pick",
-        "title": "Switch Window"
+        "title": "Switch Window",
+        "category": "WinHopper"
       },
       {
         "command": "winhopper.setup",
-        "title": "Setup"
+        "title": "Setup",
+        "category": "WinHopper"
+      },
+      {
+        "command": "winhopper.displayDropdown",
+        "title": "Show as Dropdown",
+        "category": "WinHopper"
+      },
+      {
+        "command": "winhopper.displayButtons",
+        "title": "Show as Buttons",
+        "category": "WinHopper"
+      },
+      {
+        "command": "winhopper.positionLeft",
+        "title": "Show on Left",
+        "category": "WinHopper"
+      },
+      {
+        "command": "winhopper.positionRight",
+        "title": "Show on Right",
+        "category": "WinHopper"
+      },
+      {
+        "command": "winhopper.toggleSidebar",
+        "title": "Toggle Explorer Section",
+        "category": "WinHopper"
       }
     ],
     "views": {

@@ -55,7 +55,19 @@ Changes apply right away in every open window. No restart needed.
 1. Open two or more VS Code windows, each with a folder or `.code-workspace` file open.
 2. Click the window name in the status bar to open the list, then pick a window. Or click a window in the **Open Windows** section.
 
-You can also run **WinHopper: Switch Window** from the Command Palette.
+## Command Palette
+
+Press `Cmd+Shift+P` (Windows/Linux: `Ctrl+Shift+P`) and type **WinHopper** to see every option:
+
+| Command | What it does |
+| --- | --- |
+| WinHopper: Switch Window | Pick a window from the list |
+| WinHopper: Show as Dropdown | One status bar item with a list |
+| WinHopper: Show as Buttons | One status bar button per window |
+| WinHopper: Show on Left | Status bar on the left side |
+| WinHopper: Show on Right | Status bar on the right side |
+| WinHopper: Toggle Explorer Section | Show or hide the Open Windows section |
+| WinHopper: Setup | Answer the setup questions again |
 
 ## Notes
 

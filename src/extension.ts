@@ -202,6 +202,20 @@ export function activate(context: vscode.ExtensionContext) {
 
   const setupCommand = vscode.commands.registerCommand('winhopper.setup', setup);
 
+  // Command Palette shortcuts for the display settings.
+  const setSetting = (key: string, value: unknown) =>
+    vscode.workspace.getConfiguration('winhopper').update(key, value, vscode.ConfigurationTarget.Global);
+
+  const shortcuts = [
+    vscode.commands.registerCommand('winhopper.displayDropdown', () => setSetting('display', 'dropdown')),
+    vscode.commands.registerCommand('winhopper.displayButtons', () => setSetting('display', 'buttons')),
+    vscode.commands.registerCommand('winhopper.positionLeft', () => setSetting('position', 'left')),
+    vscode.commands.registerCommand('winhopper.positionRight', () => setSetting('position', 'right')),
+    vscode.commands.registerCommand('winhopper.toggleSidebar', () =>
+      setSetting('sidebar', !vscode.workspace.getConfiguration('winhopper').get('sidebar', true)),
+    ),
+  ];
+
   const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration('winhopper.sidebar')) {
       void applySidebar();
@@ -241,7 +255,7 @@ export function activate(context: vscode.ExtensionContext) {
     void setup();
   }
 
-  context.subscriptions.push(jump, pick, setupCommand, configWatcher, windowsView, treeChanged, {
+  context.subscriptions.push(jump, pick, setupCommand, ...shortcuts, configWatcher, windowsView, treeChanged, {
     dispose: () => {
       clearInterval(timer);
       items.forEach((item) => item.dispose());
