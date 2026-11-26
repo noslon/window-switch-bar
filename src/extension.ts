@@ -20,11 +20,14 @@ export function activate(context: vscode.ExtensionContext) {
   const myId = randomUUID();
   const myFile = path.join(registryDir, `${myId}.json`);
   const items = new Map<string, vscode.StatusBarItem>();
+  let dropdown: vscode.StatusBarItem | undefined;
+
+  const config = () => vscode.workspace.getConfiguration('windowswitchbar');
 
   const alignment = (): vscode.StatusBarAlignment =>
-    vscode.workspace.getConfiguration('windowswitchbar').get('position') === 'right'
-      ? vscode.StatusBarAlignment.Right
-      : vscode.StatusBarAlignment.Left;
+    config().get('position') === 'right' ? vscode.StatusBarAlignment.Right : vscode.StatusBarAlignment.Left;
+
+  const dropdownMode = (): boolean => config().get('display') === 'dropdown';
 
   const currentTarget = (): string | undefined =>
     vscode.workspace.workspaceFile?.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -64,6 +67,11 @@ export function activate(context: vscode.ExtensionContext) {
     return windows.sort((a, b) => a.label.localeCompare(b.label));
   };
 
+  // This window and the others, with windows of the same name shown once.
+  // This window goes first, so it wins over another window with the same name.
+  const allWindows = async (): Promise<WindowInfo[]> =>
+    uniqueByName([ownInfo(), ...(await readWindows())]).sort((a, b) => a.label.localeCompare(b.label));
+
   // Windows with the same name show up once. The first one in name order is used.
   const uniqueByName = (windows: WindowInfo[]): WindowInfo[] => {
     const byName = new Map<string, WindowInfo>();
@@ -94,16 +102,34 @@ export function activate(context: vscode.ExtensionContext) {
     }
   };
 
-  // One status bar entry per window, so a single click jumps to the others.
-  // The current window is marked with a check mark and does nothing when clicked.
+  // Removes all status bar entries, so the next refresh recreates them.
+  const clearItems = () => {
+    items.forEach((item) => item.dispose());
+    items.clear();
+    dropdown?.dispose();
+    dropdown = undefined;
+  };
+
   const refresh = async () => {
     await publish();
-    // This window goes first, so it wins over another window with the same name.
-    const windows = uniqueByName([ownInfo(), ...(await readWindows())]).sort((a, b) =>
-      a.label.localeCompare(b.label),
-    );
-    const names = new Set(windows.map((w) => w.label));
+    const windows = await allWindows();
 
+    if (dropdownMode()) {
+      // One status bar entry that shows this window. Click it to pick a window.
+      items.forEach((item) => item.dispose());
+      items.clear();
+      dropdown ??= vscode.window.createStatusBarItem(alignment(), 100);
+      dropdown.text = `$(window) ${currentLabel()}`;
+      dropdown.tooltip = 'Switch window';
+      dropdown.command = 'windowswitchbar.pick';
+      dropdown.show();
+      return;
+    }
+
+    // One entry per window. The current window is marked and does nothing when clicked.
+    dropdown?.dispose();
+    dropdown = undefined;
+    const names = new Set(windows.map((w) => w.label));
     for (const [label, item] of items) {
       if (!names.has(label)) {
         item.dispose();
@@ -120,24 +146,52 @@ export function activate(context: vscode.ExtensionContext) {
       const current = w.id === myId;
       item.text = current ? `$(check) ${w.label}` : `$(window) ${w.label}`;
       item.tooltip = current ? 'Current window' : `Switch to ${w.label}`;
-      item.command = current ? undefined : { command: 'windowswitchbar.jump', title: 'Switch Window', arguments: [w.target] };
+      item.command = current
+        ? undefined
+        : { command: 'windowswitchbar.jump', title: 'Switch Window', arguments: [w.target] };
       item.show();
     });
   };
 
   const jump = vscode.commands.registerCommand('windowswitchbar.jump', jumpTo);
 
-  // Command Palette shortcuts for the side of the status bar.
-  const setPosition = (value: string) =>
-    vscode.workspace.getConfiguration('windowswitchbar').update('position', value, vscode.ConfigurationTarget.Global);
-  const positionLeft = vscode.commands.registerCommand('windowswitchbar.positionLeft', () => setPosition('left'));
-  const positionRight = vscode.commands.registerCommand('windowswitchbar.positionRight', () => setPosition('right'));
+  // Dropdown mode: a list of all windows. The current window is marked and does nothing.
+  const pick = vscode.commands.registerCommand('windowswitchbar.pick', async () => {
+    const windows = await allWindows();
+    const picked = await vscode.window.showQuickPick(
+      windows.map((w) => ({
+        label: w.id === myId ? `$(check) ${w.label}` : `$(window) ${w.label}`,
+        description: w.id === myId ? 'current window' : w.target,
+        target: w.target,
+        current: w.id === myId,
+      })),
+      { placeHolder: 'Switch to window' },
+    );
+    if (picked && !picked.current) {
+      await jumpTo(picked.target);
+    }
+  });
+
+  // Command Palette shortcuts for the side and the display style.
+  const setSetting = (key: string, value: string) =>
+    config().update(key, value, vscode.ConfigurationTarget.Global);
+  const positionLeft = vscode.commands.registerCommand('windowswitchbar.positionLeft', () =>
+    setSetting('position', 'left'),
+  );
+  const positionRight = vscode.commands.registerCommand('windowswitchbar.positionRight', () =>
+    setSetting('position', 'right'),
+  );
+  const displayDropdown = vscode.commands.registerCommand('windowswitchbar.displayDropdown', () =>
+    setSetting('display', 'dropdown'),
+  );
+  const displayButtons = vscode.commands.registerCommand('windowswitchbar.displayButtons', () =>
+    setSetting('display', 'buttons'),
+  );
 
   const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration('windowswitchbar.position')) {
-      // Alignment can't change on an existing item, so recreate them all.
-      items.forEach((item) => item.dispose());
-      items.clear();
+    if (e.affectsConfiguration('windowswitchbar.position') || e.affectsConfiguration('windowswitchbar.display')) {
+      // Alignment and mode can't change on existing items, so recreate them all.
+      clearItems();
       void refresh();
     }
   });
@@ -145,13 +199,22 @@ export function activate(context: vscode.ExtensionContext) {
   void fs.mkdir(registryDir, { recursive: true }).then(refresh);
   const timer = setInterval(refresh, HEARTBEAT_MS);
 
-  context.subscriptions.push(jump, positionLeft, positionRight, configWatcher, {
-    dispose: () => {
-      clearInterval(timer);
-      items.forEach((item) => item.dispose());
-      void fs.rm(myFile, { force: true });
+  context.subscriptions.push(
+    jump,
+    pick,
+    positionLeft,
+    positionRight,
+    displayDropdown,
+    displayButtons,
+    configWatcher,
+    {
+      dispose: () => {
+        clearInterval(timer);
+        clearItems();
+        void fs.rm(myFile, { force: true });
+      },
     },
-  });
+  );
 }
 
 export function deactivate() {}

@@ -5,6 +5,7 @@
 First public release.
 
 - Status bar entry for each other open VS Code window. Click one to switch to it.
+- `windowswitchbar.display` setting: `dropdown` (default, one entry with a window list) or `buttons` (one entry per window), with Command Palette commands to switch.
 - `windowswitchbar.position` setting and Command Palette commands to show the status bar entries on the left or right.
 - Windows with the same name are shown once.
 - The current window is marked with a check mark.

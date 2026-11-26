@@ -10,16 +10,20 @@ Window Switch Bar adds your open VS Code windows to the status bar. Click a wind
 
 ## Settings
 
-Choose which side of the status bar Window Switch Bar uses:
+Choose how and where Window Switch Bar shows in the status bar:
 
+- `windowswitchbar.display`: `buttons` (default) or `dropdown`
+  - `buttons`: one status bar entry per window. Click one to switch to that window.
+  - `dropdown`: one status bar entry with the current window name. Click it to pick a window from a list.
 - `windowswitchbar.position`: `left` (default) or `right`
 
-Change it in any of these ways:
+Change them in any of these ways:
 
 - **Settings:** open Settings, search for `windowswitchbar`, and pick a value.
-- **Command Palette:** open the Command Palette, type **Window Switch Bar**, and run **Show on Left** or **Show on Right**.
+- **Command Palette:** open the Command Palette, type **Window Switch Bar**, and run **Show as Dropdown**, **Show as Buttons**, **Show on Left**, or **Show on Right**.
 
 ```json
+"windowswitchbar.display": "buttons",
 "windowswitchbar.position": "right"
 ```
 
@@ -28,15 +32,7 @@ Changes apply right away. No restart needed.
 ## Quick start
 
 1. Open two or more VS Code windows, each with a folder or `.code-workspace` file open.
-2. Click the window you want in the status bar.
-
-## Notes
-
-- The current window is marked with a check mark (✓). Clicking it does nothing.
-- Windows with the same name are shown once.
-- Only windows with Window Switch Bar running are listed. This includes windows in untrusted folders (Restricted Mode).
-- Other empty windows (no folder open) are not listed, because there is nothing to jump back to.
-- Nothing leaves your machine. Window Switch Bar makes no network requests.
+2. Click the status bar entry and pick the window you want. In `buttons` mode, click the window's entry directly.
 
 ## Feedback
 

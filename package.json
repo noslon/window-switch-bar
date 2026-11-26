@@ -54,11 +54,34 @@
         "command": "windowswitchbar.positionRight",
         "title": "Show on Right",
         "category": "Window Switch Bar"
+      },
+      {
+        "command": "windowswitchbar.displayDropdown",
+        "title": "Show as Dropdown",
+        "category": "Window Switch Bar"
+      },
+      {
+        "command": "windowswitchbar.displayButtons",
+        "title": "Show as Buttons",
+        "category": "Window Switch Bar"
       }
     ],
     "configuration": {
       "title": "Window Switch Bar",
       "properties": {
+        "windowswitchbar.display": {
+          "type": "string",
+          "default": "buttons",
+          "enum": [
+            "buttons",
+            "dropdown"
+          ],
+          "enumDescriptions": [
+            "One status bar entry per window. Click one to switch to that window.",
+            "One status bar entry with the current window name. Click it to pick a window from a list."
+          ],
+          "description": "How Window Switch Bar shows windows in the status bar."
+        },
         "windowswitchbar.position": {
           "type": "string",
           "default": "left",
