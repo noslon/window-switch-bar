@@ -22,7 +22,7 @@ After installing, fully quit VS Code and reopen it. Open windows keep running th
 
 1. Add a `## <version>` section to `CHANGELOG.md` and commit it.
 2. In GitHub, open **Actions → Release → Run workflow**.
-3. Pick the bump (`patch`, `minor` or `major`). Tick **Build only** to test without publishing.
+3. Pick the bump (`patch`, `minor`, `major`), or `none` to publish the version already in `package.json`. Tick **Build only** to test without publishing.
 
 The workflow bumps `package.json`, checks the changelog entry, builds the VSIX, and publishes it to the Marketplace. Then it commits the version bump, tags `vX.Y.Z`, and creates a GitHub Release with the VSIX attached.
 

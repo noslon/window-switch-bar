@@ -14,6 +14,7 @@ on:
           - patch
           - minor
           - major
+          - none
         default: patch
       build_only:
         description: 'Build only, do not publish or tag'
@@ -43,7 +44,11 @@ jobs:
         env:
           BUMP: ${{ inputs.bump }}
         run: |
-          VERSION=$(npm version "$BUMP" --no-git-tag-version | tr -d 'v')
+          if [ "$BUMP" = none ]; then
+            VERSION=$(node -p "require('./package.json').version")
+          else
+            VERSION=$(npm version "$BUMP" --no-git-tag-version | tr -d 'v')
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Releasing $VERSION"
 
@@ -84,7 +89,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Release v$VERSION"
+          if ! git diff --quiet; then
+            git commit -am "Release v$VERSION"
+          fi
           git tag "v$VERSION"
           git push origin HEAD:main "v$VERSION"
           awk -v v="$VERSION" '$0 == "## " v {f=1; next} /^## / {f=0} f' CHANGELOG.md > release-notes.md
