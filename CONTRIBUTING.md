@@ -20,9 +20,13 @@ After installing, fully quit VS Code and reopen it. Open windows keep running th
 
 ## Release
 
-1. Bump `version` in `package.json` and add an entry to `CHANGELOG.md`.
-2. Commit and push.
-3. Tag and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`. The `publish` workflow publishes it to the Marketplace.
+1. Add a `## <version>` section to `CHANGELOG.md` and commit it.
+2. In GitHub, open **Actions → Release → Run workflow**.
+3. Pick the bump (`patch`, `minor` or `major`). Tick **Build only** to test without publishing.
+
+The workflow bumps `package.json`, checks the changelog entry, builds the VSIX, and publishes it to the Marketplace. Then it commits the version bump, tags `vX.Y.Z`, and creates a GitHub Release with the VSIX attached.
+
+It publishes before committing, so if publishing fails, nothing is pushed and you can run it again.
 
 ## Project layout
 
@@ -31,5 +35,5 @@ src/extension.ts      the whole extension
 images/icon.png       Marketplace icon (256×256)
 package.json          manifest, settings, scripts
 CHANGELOG.md          release notes
-.github/workflows/    publish workflow (trusted publishing)
+.github/workflows/    release workflow (trusted publishing)
 ```

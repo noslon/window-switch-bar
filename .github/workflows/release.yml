@@ -1,0 +1,92 @@
+name: Release
+
+# Run from the Actions tab: choose the version bump, then Run workflow.
+# The CHANGELOG.md must already have a "## <new version>" section.
+# Build only builds the VSIX and uploads it as an artifact, without publishing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      build_only:
+        description: 'Build only, do not publish or tag'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - name: Bump version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          VERSION=$(npm version "$BUMP" --no-git-tag-version | tr -d 'v')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing $VERSION"
+
+      - name: Check changelog entry
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if ! grep -q "^## $VERSION\$" CHANGELOG.md; then
+            echo "CHANGELOG.md has no '## $VERSION' section. Add one and run again."
+            exit 1
+          fi
+
+      - name: Build VSIX
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          npx vsce package --out "window-switch-bar-$VERSION.vsix"
+
+      - name: Upload VSIX (dry run)
+        if: inputs.build_only
+        uses: actions/upload-artifact@v4
+        with:
+          name: window-switch-bar-${{ steps.version.outputs.version }}
+          path: window-switch-bar-${{ steps.version.outputs.version }}.vsix
+
+      # Publish first: if it fails, nothing has been committed or tagged, so the run can be repeated.
+      - name: Publish to Marketplace
+        if: ${{ !inputs.build_only }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: npx @vscode/vsce publish --oidc --packagePath "window-switch-bar-$VERSION.vsix"
+
+      - name: Commit, tag and create GitHub Release
+        if: ${{ !inputs.build_only }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Release v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main "v$VERSION"
+          awk -v v="$VERSION" '$0 == "## " v {f=1; next} /^## / {f=0} f' CHANGELOG.md > release-notes.md
+          gh release create "v$VERSION" "window-switch-bar-$VERSION.vsix" \
+            --title "v$VERSION" --notes-file release-notes.md
