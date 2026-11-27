@@ -62,7 +62,7 @@ jobs:
         run: |
           npx vsce package --out "window-switch-bar-$VERSION.vsix"
 
-      - name: Upload VSIX (dry run)
+      - name: Upload VSIX (build only)
         if: inputs.build_only
         uses: actions/upload-artifact@v4
         with:
