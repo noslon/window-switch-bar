@@ -26,7 +26,6 @@ Change them in any of these ways:
 "windowswitchbar.display": "buttons",
 "windowswitchbar.position": "right"
 ```
-
 Changes apply right away. No restart needed.
 
 ## Quick start
