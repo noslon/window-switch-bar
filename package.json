@@ -3,7 +3,7 @@
   "displayName": "Window Switch Bar",
   "description": "Jump between open VS Code windows in one click from the status bar.",
   "version": "1.0.0",
-  "publisher": "jhuber",
+  "publisher": "noslon",
   "license": "MIT",
   "repository": {
     "type": "git",
